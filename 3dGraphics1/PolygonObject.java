@@ -19,7 +19,7 @@ public class PolygonObject {
         float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
 
         hsb[2] *= light; // Multiply the brightness value
-        System.out.println(light);
+        
         // Convert back to RGB
         int rgb = Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]);
         Color c_light = new Color(rgb);

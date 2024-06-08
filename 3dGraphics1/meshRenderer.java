@@ -1,82 +1,66 @@
 import java.awt.Color;
+import java.util.ArrayList;
 
 public class meshRenderer {
 
-    public static Object3D box(int[] centerPoint, int lengthX, int lengthY, int heightZ, Color color) {
+    public static Object3D sphere(int radius, int[] center, int segments, Color color, Screen screen) {
+        ArrayList<int[]> vertices = new ArrayList<>();
+        ArrayList<int[]> triangles = new ArrayList<>();
+        
+        // Generate vertices
+        for (int i = 0; i <= segments; i++) {
+            double lat = Math.PI / segments * i;
+            for (int j = 0; j <= segments; j++) {
+                double lon = 2 * Math.PI / segments * j;
+                int x = (int) (center[0] + radius * Math.sin(lat) * Math.cos(lon));
+                int y = (int) (center[1] + radius * Math.sin(lat) * Math.sin(lon));
+                int z = (int) (center[2] + radius * Math.cos(lat));
+                vertices.add(new int[] {x, y, z});
+            }
+        }
 
+        // Generate triangles
+        for (int i = 0; i < segments; i++) {
+            for (int j = 0; j < segments; j++) {
+                int first = i * (segments + 1) + j;
+                int second = first + segments + 1;
+                triangles.add(new int[] {first, second, first + 1});
+                triangles.add(new int[] {second, second + 1, first + 1});
+            }
+        }
+
+        int[][] vertexArray = vertices.toArray(new int[0][0]);
+        int[][] triangleArray = triangles.toArray(new int[0][0]);
+        return new Object3D(vertexArray, triangleArray, color, screen);
+    }
+
+    public static Object3D box(int[] center, int width, int height, int depth, Color color, Screen screen) {
         int[][] vertices = {
-                { centerPoint[0] - lengthX / 2, centerPoint[1] - lengthY / 2, centerPoint[2] - heightZ / 2 }, // 0
-                { centerPoint[0] + lengthX / 2, centerPoint[1] - lengthY / 2, centerPoint[2] - heightZ / 2 }, // 1
-                { centerPoint[0] + lengthX / 2, centerPoint[1] + lengthY / 2, centerPoint[2] - heightZ / 2 }, // 2
-                { centerPoint[0] - lengthX / 2, centerPoint[1] + lengthY / 2, centerPoint[2] - heightZ / 2 }, // 3
-                { centerPoint[0] - lengthX / 2, centerPoint[1] - lengthY / 2, centerPoint[2] + heightZ / 2 }, // 4
-                { centerPoint[0] + lengthX / 2, centerPoint[1] - lengthY / 2, centerPoint[2] + heightZ / 2 }, // 5
-                { centerPoint[0] + lengthX / 2, centerPoint[1] + lengthY / 2, centerPoint[2] + heightZ / 2 }, // 6
-                { centerPoint[0] - lengthX / 2, centerPoint[1] + lengthY / 2, centerPoint[2] + heightZ / 2 } // 7
+            {center[0] - width / 2, center[1] - height / 2, center[2] - depth / 2},
+            {center[0] + width / 2, center[1] - height / 2, center[2] - depth / 2},
+            {center[0] + width / 2, center[1] + height / 2, center[2] - depth / 2},
+            {center[0] - width / 2, center[1] + height / 2, center[2] - depth / 2},
+            {center[0] - width / 2, center[1] - height / 2, center[2] + depth / 2},
+            {center[0] + width / 2, center[1] - height / 2, center[2] + depth / 2},
+            {center[0] + width / 2, center[1] + height / 2, center[2] + depth / 2},
+            {center[0] - width / 2, center[1] + height / 2, center[2] + depth / 2}
         };
 
-        // Define triangles using indices of vertices
-        int[][] trianglePointers = {
-                { 0, 1, 2 }, { 2, 3, 0 }, // Front face
-                { 1, 5, 6 }, { 6, 2, 1 }, // Right face
-                { 4, 5, 1 }, { 1, 0, 4 }, // Bottom face
-                { 3, 2, 6 }, { 6, 7, 3 }, // Top face
-                { 4, 7, 6 }, { 6, 5, 4 }, // Back face
-                { 3, 7, 4 }, { 4, 0, 3 } // Left face
+        int[][] triangles = {
+            // Front face
+            {0, 1, 2}, {2, 3, 0},
+            // Back face
+            {4, 5, 6}, {6, 7, 4},
+            // Left face
+            {0, 4, 7}, {7, 3, 0},
+            // Right face
+            {1, 5, 6}, {6, 2, 1},
+            // Top face
+            {3, 7, 6}, {6, 2, 3},
+            // Bottom face
+            {0, 4, 5}, {5, 1, 0}
         };
-        return new Object3D(vertices, trianglePointers, color);
+
+        return new Object3D(vertices, triangles, color, screen);
     }
-
-    public static Object3D sphere(int radius, int[] center, int resolution, Color color) {
-
-        int numVertices = (resolution + 1) * (resolution + 1);
-        int numTriangles = resolution * resolution * 2;
-
-        int[][] vertices = new int[numVertices][3];
-        int[][] trianglePointers = new int[numTriangles][3];
-
-        int vertexIndex = 0;
-        int triangleIndex = 0;
-
-        // Create vertices
-        for (int i = 0; i <= resolution; i++) {
-            double theta = Math.PI * i / resolution;
-            for (int j = 0; j <= resolution; j++) {
-                double phi = 2 * Math.PI * j / resolution;
-                int x = (int) (center[0] + radius * Math.sin(theta) * Math.cos(phi));
-                int y = (int) (center[1] + radius * Math.sin(theta) * Math.sin(phi));
-                int z = (int) (center[2] + radius * Math.cos(theta));
-                vertices[vertexIndex][0] = x;
-                vertices[vertexIndex][1] = y;
-                vertices[vertexIndex][2] = z;
-                vertexIndex++;
-            }
-        }
-
-        // Create triangles
-        for (int i = 0; i < resolution; i++) {
-            for (int j = 0; j < resolution; j++) {
-                int first = i * (resolution + 1) + j;
-                int second = first + resolution + 1;
-
-                // First triangle
-                trianglePointers[triangleIndex][0] = first;
-                trianglePointers[triangleIndex][1] = second;
-                trianglePointers[triangleIndex][2] = first + 1;
-                triangleIndex++;
-
-                // Second triangle
-                trianglePointers[triangleIndex][0] = first + 1;
-                trianglePointers[triangleIndex][1] = second;
-                trianglePointers[triangleIndex][2] = second + 1;
-                triangleIndex++;
-            }
-        }
-        return new Object3D(vertices, trianglePointers, color);
-    }
-
-    public static Object3D custom(int[][] vertices, int[][] trianglePointers, Color color) {
-        return new Object3D(vertices, trianglePointers, color);
-    }
-
 }
